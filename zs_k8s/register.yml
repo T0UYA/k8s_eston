@@ -1,0 +1,48 @@
+# -----------------------Deployment---------------------- #
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: register-deploy
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: register
+    spec:
+      containers:
+      - name: register
+        image: c7jdk8:v8 
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        - name: jar-dirs
+          mountPath: /usr/local/erp
+        command: ["java"]
+        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_registry.jar","--spring.profiles.active=prod"]
+        ports: 
+        - containerPort: 80
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      - name: jar-dirs
+        hostPath:
+          path: /data/gfs_data
+
+---
+
+# -----------------------  Service  --------------------- #
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-server
+spec:
+  type: NodePort
+  selector:
+    app: register
+  ports:
+  - protocol: TCP
+    port: 80
+    nodePort: 31105
+    targetPort: 80 

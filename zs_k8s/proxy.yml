@@ -1,0 +1,49 @@
+# -----------------------Deployment---------------------- #
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: proxy-deploy
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: proxy
+    spec:
+      containers:
+      - name: proxy
+        image: c7jdk8:v8
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        - name: jar-dirs
+          mountPath: /usr/local/erp
+        command: ["java"]
+        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_proxy.jar","--spring.profiles.active=prod"]
+        ports: 
+        - containerPort: 80
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      - name: jar-dirs
+        hostPath:
+          path: /data/gfs_data
+
+---
+
+# -----------------------  Service  --------------------- #
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-svc
+spec:
+#  type: NodePort
+  type: ClusterIP
+  selector:
+    app: proxy
+  ports:
+  - protocol: TCP
+    port: 80
+#    nodePort: 31100
+    targetPort: 80 

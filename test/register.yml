@@ -1,0 +1,59 @@
+# -----------------------Deployment---------------------- #
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: register-deploy
+  namespace: test-env
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: register-test
+        env: test-env
+    spec:
+      tolerations:
+      - key: "test"
+        operator: "Equal"
+        value: "node"
+        effect: "NoSchedule"
+      nodeSelector: 
+        NodeEnv: testnode
+      containers:
+      - name: register
+        image: c7jdk8:v8 
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        - name: jar-dirs
+          mountPath: /usr/local/erp
+        command: ["java"]
+        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_registry_test.jar","--spring.profiles.active=test"]
+        ports: 
+        - containerPort: 80
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      - name: jar-dirs
+        hostPath:
+          path: /data/gfs_data
+
+---
+
+# -----------------------  Service  --------------------- #
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-server-test
+  namespace: test-env
+spec:
+  type: NodePort
+  selector:
+    app: register-test
+    env: test-env
+  ports:
+  - protocol: TCP
+    port: 80
+    nodePort: 32105
+    targetPort: 80 

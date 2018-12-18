@@ -1,0 +1,87 @@
+# -----------------------Deployment---------------------- #
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: pms-deploy-test
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: pms-test
+    spec:
+      tolerations:
+      - key: "test"
+        operator: "Equal"
+        value: "node"
+        effect: "NoSchedule"
+      nodeSelector:
+        NodeEnv: testnode
+      containers:
+      - name: pms-test
+        image: c7jdk8:v8 
+        ports: 
+        - containerPort: 80
+        - containerPort: 9999
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        - namepms: jar-dirs
+          mountPath: /usr/local/erp
+        - name: zipkin-log
+          mountPath: /var/log/zipkin
+#        - name: xxl-job
+#          mountPath: /var/log/xxl-job
+        command: ["java"]
+        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_pms-test.jar","--spring.profiles.active=test"]
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      - name: jar-dirs
+        hostPath:
+          path: /data/gfs_data
+#      - name: xxl-job
+#        nfs:
+#          server: 192.168.1.252
+#          path: /nfs
+      - name: zipkin-log
+        persistentVolumeClaim:
+          claimName: zipkin-pms-pvc-test
+---
+#-----------------------     pvc    --------------------- #
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: zipkin-pms-pvc-test
+  namespace: test-env
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  selector:
+    matchLabels:
+      pv: zipkin-pms-test-pv
+---
+# -----------------------  Service  --------------------- #
+apiVersion: v1
+kind: Service
+metadata:
+  name: pms-svc-test
+spec:
+  type: NodePort
+  selector:
+    app: pms-test
+  ports:
+  - name: api1
+    protocol: TCP
+    port: 80
+    nodePort: 32071
+    targetPort: 80 
+#  - name: api2
+#    protocol: TCP
+#    port: 9999
+#    nodePort: 32999
+#    targetPort: 9999 

@@ -1,0 +1,37 @@
+# -----------------------Deployment---------------------- #
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: test-deploy
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      containers:
+      - name: test
+        image: c7jdk8:v8
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        - name: jar-dirs
+          mountPath: /usr/local/erp
+        - name: xxl-job
+          mountPath: /var/log/xxl-job
+        command: ["top"]
+        args: ["-b"]
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      - name: jar-dirs
+        hostPath:
+          path: /data/gfs_data
+      - name: xxl-job
+        nfs:
+          server: 192.168.1.252
+          path: /nfs
+---
+

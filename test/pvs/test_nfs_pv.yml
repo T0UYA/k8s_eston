@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfspv1
+  labels:
+    pv: test-env-pv1
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+#  storageClassName: test-env-nfs
+  nfs:
+    path: /mnt/md0/test_env_nfs_pv_1
+    server: 10.100.100.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfspv2
+  labels:
+    pv: test-env-pv2
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Recycle
+#  storageClassName: test-env-nfs
+  nfs:
+    path: /mnt/md0/test_env_nfs_pv_2
+    server: 10.100.100.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfspv3
+  labels:
+    pv: test-env-pv3
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+#  storageClassName: test-env-nfs
+  nfs:
+    path: /mnt/md0/test_env_nfs_pv_3
+    server: 10.100.100.100
+---

@@ -1,0 +1,58 @@
+# -----------------------Deployment---------------------- #
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: dashboard-deploy-test
+  namespace: test-env
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dashboard-test
+        env: test-env
+    spec:
+      tolerations:
+      - key: "test"
+        operator: "Equal"
+        value: "node"
+        effect: "NoSchedule"
+      nodeSelector:
+        NodeEnv: testnode
+      containers:
+      - name: dashboard
+        image: c7jdk8:v8 
+        ports: 
+        - containerPort: 9410
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        - name: jar-dirs
+          mountPath: /usr/local/erp
+        command: ["java"]
+        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_dashboard_test.jar","--spring.profiles.active=test"]
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      - name: jar-dirs
+        hostPath:
+          path: /data/gfs_data
+---
+# -----------------------  Service  --------------------- #
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-svc-test
+  namespace: test-env
+spec:
+  type: NodePort
+  selector:
+    env: test-env
+    app: dashboard-test
+  ports:
+  - name: port8411
+    protocol: TCP
+    port: 9410
+    nodePort: 32410
+    targetPort: 9410 

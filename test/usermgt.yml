@@ -1,0 +1,85 @@
+# -----------------------Deployment---------------------- #
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: usermgt-deploy-test
+  namespace: test-env
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: usermgt-test
+        env: test-env
+    spec:
+      tolerations:
+      - key: "test"
+        operator: "Equal"
+        value: "node"
+        effect: "NoSchedule"
+      nodeSelector:
+        NodeEnv: testnode
+      containers:
+      - name: usermgt
+        image: c7jdk8:v8 
+        ports: 
+        - containerPort: 80
+        - containerPort: 9999
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        - name: jar-dirs
+          mountPath: /usr/local/erp
+        - name: zipkin-log
+          mountPath: /var/log/zipkin
+        command: ["java"]
+        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_usermgt_test.jar","--spring.profiles.active=test"]
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      - name: jar-dirs
+        hostPath:
+          path: /data/gfs_data
+      - name: zipkin-log
+        persistentVolumeClaim:
+          claimName: zipkin-usermgt-pvc-test
+
+---
+#-----------------------     pvc    --------------------- #
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: zipkin-usermgt-pvc-test
+  namespace: test-env
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  selector:
+    matchLabels:
+      pv: zipkin-usermgt-test-pv 
+---
+# -----------------------  Service  --------------------- #
+apiVersion: v1
+kind: Service
+metadata:
+  name: usermgt-svc-test
+  namespace: test-env
+spec:
+  type: NodePort
+  selector:
+    env: test-env
+    app: usermgt-test
+  ports:
+  - name: port80
+    protocol: TCP
+    port: 80
+    nodePort: 32041
+    targetPort: 80 
+  - name: port9999
+    protocol: TCP
+    port: 9999
+    targetPort: 9999 

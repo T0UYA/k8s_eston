@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: zipkin-usermgt-pv
+  labels:
+    pv: zipkin-usermgt-pv
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+#  storageClassName: test-env-nfs
+  nfs:
+    path: /zipkin/usermgt-pv
+    server: 192.168.1.252 
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: zipkin-pms-pv
+  labels:
+    pv: zipkin-pms-pv
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+#  storageClassName: test-env-nfs
+  nfs:
+    path: /zipkin/pms-pv
+    server: 192.168.1.252
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: zipkin-sale-pv
+  labels:
+    pv: zipkin-sale-pv
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+#  storageClassName: test-env-nfs
+  nfs:
+    path: /zipkin/sale-pv
+    server: 192.168.1.252
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: zipkin-customer-pv
+  labels:
+    pv: zipkin-customer-pv
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+#  storageClassName: test-env-nfs
+  nfs:
+    path: /zipkin/customer-pv
+    server: 192.168.1.252
+---

@@ -1,0 +1,47 @@
+# -----------------------Deployment---------------------- #
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: dashboard-deploy
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: c7jdk8:v8 
+        ports: 
+        - containerPort: 9410
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+        - name: jar-dirs
+          mountPath: /usr/local/erp
+        command: ["java"]
+        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_dashboard.jar","--spring.profiles.active=prod"]
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+      - name: jar-dirs
+        hostPath:
+          path: /data/gfs_data
+---
+# -----------------------  Service  --------------------- #
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-svc
+spec:
+  type: NodePort
+  selector:
+    app: dashboard
+  ports:
+  - name: port9410
+    protocol: TCP
+    port: 9410
+    nodePort: 31410
+    targetPort: 9410 
