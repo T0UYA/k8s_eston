@@ -5,17 +5,22 @@ metadata:
   name: sale-deploy
 spec:
   replicas: 2
+  selector:
+    matchLabels:
+      app: sale
+      release: proc
   template:
     metadata:
       labels:
         app: sale
+        release: proc
     spec:
       containers:
       - name: sale
         image: c7jdk8:v8 
         ports: 
         - containerPort: 80
-#        - containerPort: 9999
+        - containerPort: 9999
         volumeMounts:
         - name: host-time
           mountPath: /etc/localtime
@@ -23,10 +28,19 @@ spec:
           mountPath: /usr/local/erp
         - name: zipkin-log
           mountPath: /var/log/zipkin
-#        - name: xxl-job
-#          mountPath: /var/log/xxl-job
+        - name: xxl-job
+          mountPath: /var/log/xxl-job
         command: ["java"]
         args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_sale.jar","--spring.profiles.active=prod"]
+        resources:
+          requests:
+            memory: "2048Mi"
+            cpu: "1"
+            ephemeral-storage: "1024Mi"
+          limits:
+            memory: "32Gi"
+            cpu: "4"
+            ephemeral-storage: "10240Mi"
       volumes:
       - name: host-time
         hostPath:
@@ -37,10 +51,10 @@ spec:
       - name: zipkin-log
         persistentVolumeClaim:
           claimName: zipkin-sale-pvc
-#      - name: xxl-job
-#        nfs:
-#          server: 192.168.1.252
-#          path: /nfs
+      - name: xxl-job
+        nfs:
+          server: 192.168.1.252
+          path: /nfs
 ---
 
 # -----------------------  Service  --------------------- #
@@ -52,14 +66,15 @@ spec:
   type: NodePort
   selector:
     app: sale
+    release: proc
   ports:
   - name: api1
     protocol: TCP
     port: 80
     nodePort: 31081
     targetPort: 80
-#  - name: api2
-#    protocol: TCP
-#    port: 9999
-#    nodePort: 31999
-#    targetPort: 9999 
+  - name: api2
+    protocol: TCP
+    port: 9999
+    nodePort: 31998
+    targetPort: 9999 

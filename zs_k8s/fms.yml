@@ -2,40 +2,37 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: register-deploy
+  name: fms-deploy
 spec:
   replicas: 2
-  selector:
-    matchLabels:
-      app: register
-      release: proc
   template:
     metadata:
       labels:
-        app: register
-        release: proc
+        app: fms
     spec:
       containers:
-      - name: register
+      - name: fms
         image: c7jdk8:v8 
+        ports: 
+        - containerPort: 80
         volumeMounts:
         - name: host-time
           mountPath: /etc/localtime
         - name: jar-dirs
           mountPath: /usr/local/erp
+        - name: zipkin-log
+          mountPath: /var/log/zipkin
         command: ["java"]
-        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_registry.jar","--spring.profiles.active=prod"]
+        args: ["-Duser.timezone=GMT+08","-jar","/usr/local/erp/erp_fms.jar","--spring.profiles.active=prod"]
         resources:
           requests:
-            memory: "1024Mi"
+            memory: "2048Mi"
             cpu: "1"
             ephemeral-storage: "1024Mi"
           limits:
-            memory: "8192Mi"
-            cpu: "2"
+            memory: "16Gi"
+            cpu: "4"
             ephemeral-storage: "10240Mi"
-        ports: 
-        - containerPort: 80
       volumes:
       - name: host-time
         hostPath:
@@ -43,21 +40,22 @@ spec:
       - name: jar-dirs
         hostPath:
           path: /data/gfs_data
-
+      - name: zipkin-log
+        persistentVolumeClaim:
+          claimName: zipkin-fms-pvc
 ---
 
 # -----------------------  Service  --------------------- #
 apiVersion: v1
 kind: Service
 metadata:
-  name: eureka-server
+  name: fms-svc
 spec:
   type: NodePort
   selector:
-    app: register
-    release: proc
+    app: fms
   ports:
   - protocol: TCP
     port: 80
-    nodePort: 31105
     targetPort: 80 
+    nodePort: 31000 
